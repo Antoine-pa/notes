@@ -56,5 +56,5 @@ class Paging:
 
 
     def w(self, *t):
-        with open("test.txt", "w") as f:
+        with open("write.txt", "w") as f:
             f.write(str(t))
