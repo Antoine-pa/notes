@@ -35,9 +35,12 @@ class Paging:
 
     def move_right_pagination(self, pagination, line) -> dict:
         pagination = list(pagination.items())
-        new_pagination = {"1" : 0}
-        for i in range(2, len(pagination) + 2):
-            new_pagination[str(i)] = pagination[i-2][1]
+        if pagination != []:
+            new_pagination = {"1" : 0}
+            for i in range(2, len(pagination) + 2):
+                new_pagination[str(i)] = pagination[i-2][1]
+            return new_pagination
+        new_pagination = {"1" : 2}
         return new_pagination
     
 
