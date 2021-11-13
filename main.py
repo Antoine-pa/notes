@@ -105,13 +105,9 @@ class Screen:
 
     def main(self):
         refresh_thread = threading.Thread(target = self.refresh)
-        keybinds_thread = threading.Thread(target = self.keybinds)
-        
         refresh_thread.start()
+        keybinds_thread = threading.Thread(target = self.keybinds)
         keybinds_thread.start()
-
-        refresh_thread.join()
-        keybinds_thread.join()
 
 
         self.screen.clear()
