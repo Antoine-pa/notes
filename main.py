@@ -1,136 +1,97 @@
-import curses
-import curses.ascii
-import itertools
+from screen import Screen
 from platform import system
-from pynput import keyboard
-import threading
+import curses
 
-from cursor import Cursor
-from keybinds import Keybinds
+text = [[0, 0, {}, "coucou"]]
 
-text = [[0, 0, {}, "coucou :)"], [0, 1, {"1" : 2}, "voici mon petit programme"], [0, 2, {"1" : 0, "2" : 2}, "xD"]]
+dict_keybinds_os = {
+    "Linux" : {
+        "ctrl+alt+q" : 27,
+        "del" : 127,
+        "ctrl+left-arrow" : 546,
+        "ctrl+right-arrow" : 561},
+    "Windows" : {
+        "ctrl+alt+q" : 17,
+        "del" : 8,
+        "ctrl+left-arrow" : 443,
+        "ctrl+right-arrow" : 444},
+    "Darwin" : {
+        "ctrl+alt+q" : 0,
+        "del" : 0,
+        "ctrl+left-arrow" : 0,
+        "ctrl+right-arrow" : 0}}
 
-class Screen:
+class Window:
     def __init__(self, doc):
         self.screen = curses.initscr()
         self.screen.keypad(True)
         self.doc = doc
+        self.file = "output.txt"
         self.loop = True
-        self.mode = "edit"
         curses.noecho()
-
-        ymax, xmax = self.screen.getmaxyx()
-        if len(self.doc) == 0:
-            self.doc = [[0, 0, ""]]
-        x = len(self.doc[-1][-1])+self.doc[-1][0]
-        y = len(self.doc)-1
-        self.cursor = Cursor(self.screen, x, y, xmax, ymax)
+        self._keybinds = dict_keybinds_os[system()]
+        self.screen = Screen(self.screen, self.doc)
 
 
-    def keybinds(self):
-        k = Keybinds(self.screen, self.doc, self.cursor, self.loop, self.mode)
-        with keyboard.GlobalHotKeys({
-                "<right>" : k.on_activate_right,
-                "<left>" : k.on_activate_left,
-                "<down>" : k.on_activate_down,
-                "<up>" : k.on_activate_up,
-                "<home>" : k.on_activate_home,
-                "<end>" : k.on_activate_end,
+    def keybinds(self, key):
+        if key == 259:
+            self.screen.cursor.up(self.doc, self.screen)
+        elif key == 258:
+            self.screen.cursor.down(self.doc, self.screen)
+        elif key == 260:
+            self.screen.cursor.left(self.doc, self.screen)
+        elif key == 261:
+            self.screen.cursor.right(self.doc, self.screen)
+        elif key == 262:
+            self.screen.cursor.x = 0
+        elif key == 360:
+            self.screen.cursor.x = self.screen.paging.get_end_line(self.doc, self.screen)
+        elif key == 410:
+            self.screen.cursor.ymax, self.screen.cursor.xmax = self.screen.getmaxyx()
+        elif key == self._keybinds["ctrl+alt+q"]:
+            self.loop = False
+        elif key == 10:
+            self.doc = self.screen.cursor.add_line(self.doc, self.screen)
+        elif key == self._keybinds["del"]:
+            self.doc = self.screen.cursor.del_text(self.doc, self.screen)
+        elif key == 9:
+            self.doc = self.screen.cursor.add_text(self.doc, "    ", self.screen)
+        elif key == self._keybinds["ctrl+left-arrow"]:
+            self.doc[self.screen.cursor.y][2] = self.screen.paging.move_left_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y)
+        elif key == self._keybinds["ctrl+right-arrow"]:
+            if self.screen.paging.len_pagination(self.doc, self.screen.cursor.y) + 6 < self.screen.cursor.xmax:
+                self.doc[self.screen.cursor.y][2] = self.screen.paging.move_right_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y)
+        else:
+            self.doc = self.screen.cursor.add_text(self.doc, chr(key), self.screen)
 
-                "<enter>" : k.on_activate_enter,
-                "<backspace>" : k.on_activate_delete,
-                "<tab>" : k.on_activate_tab,
-
-                "<alt>+<left>" : k.on_activate_alt_left,
-                "<alt>+<right>" : k.on_activate_alt_right,
-
-                "<alt>+q": k.on_activate_alt_q,
-                "<alt>+e": k.on_activate_alt_e,
-                "<alt>+v": k.on_activate_alt_v,
-                }) as h:
-            h.join()
-
-        #elif key == curses.KEY_RESIZE:
-        #    self.cursor.ymax, self.cursor.xmax = self.screen.getmaxyx()
-        #else:
-        #    self.doc = self.cursor.add_text(self.doc, chr(key))
-
-
-    def refresh_pagination(self):
-        add_paging = {}
-        for line in self.doc[::-1]:
-            paging = line[2]
-            if line != self.doc[-1] and add_paging != {}:
-                for i in range(len(paging)-1):
-                    if add_paging.get(str(i+1), None) is None:
-                        add_paging[str(i+1)] = 0
-                    paging[str(i+1)] = add_paging[str(i+1)]
-            else:
-                for p in paging.items():
-                    if p[1] == 1:
-                        paging[p[0]] = 0
-
-            for p in paging.items():
-                if p[1] == 2: #if it's an arrow
-                    add_paging[p[0]] = 1
-                    add_paging = dict(itertools.islice(add_paging.items(), int(p[0])))
-                else:
-                    if add_paging.get(p[0], None) is None:
-                        add_paging[p[0]] = 0
-                    else:
-                        add_paging[p[0]] = p[1]
-                    
-            self.doc[line[1]][2] = paging
 
 
     def refresh(self):
-        while self.loop:
-            self.screen.clear()
-            self.refresh_pagination()
-            for line in self.doc:
-                pagination = ""
-                if len(line[2]) != 0:
-                    for i in line[2].items():
-                        if i[1] == 0:
-                            pagination = pagination + "      "
-                        elif i[1] == 1:
-                            pagination = pagination + "  |   "
-                        elif i[1] == 2:
-                            pagination = pagination + "  |-> "
-                            
-                self.screen.addstr(line[1], line[0], pagination + line[-1])
-            self.screen.move(self.cursor.y, self.cursor.x + 6*len(self.doc[self.cursor.y][2]))
-            self.screen.refresh()
+        self.screen.screen.clear()
+        self.doc = self.screen.paging.refresh_pagination(self.doc)
+        self.screen.tools.output(self.doc, "screen", screen = self.screen)
+        self.screen.tools.move_cursor(self.screen, self.doc)
+        self.screen.screen.refresh()
+
 
 
     def main(self):
-        refresh_thread = threading.Thread(target = self.refresh)
-        refresh_thread.start()
-        keybinds_thread = threading.Thread(target = self.keybinds)
-        keybinds_thread.start()
+        while self.loop:
+            self.refresh()
 
+            key = self.screen.screen.getch()
+            self.keybinds(key)
 
-        self.screen.clear()
+        self.screen.screen.clear()
         curses.endwin()
 
-        print(self.cursor.x, self.cursor.y, self.cursor.xmax, self.cursor.ymax)
+        print(self.screen.cursor.x, self.screen.cursor.y, self.screen.cursor.xmax, self.screen.cursor.ymax)
         print(self.doc)
 
-        with open("output.txt", "w") as f:
-            text = []
-            for line in self.doc:
-                pagination = ""
-                if len(line[2]) != 0:
-                    for i in line[2].items():
-                        if i[1] == 0:
-                            pagination = pagination + "      "
-                        elif i[1] == 1:
-                            pagination = pagination + "  |   "
-                        elif i[1] == 2:
-                            pagination = pagination + "  |-> "
-                        
-                text.append(pagination + line[-1])
-            f.write("\n".join(text))
+        self.screen.tools.save(self.doc, self.file)
 
 
-Screen(text).main()
+if len(text) == 0:
+    text = [[0, 0, ""]]
+
+Window(text).main()
