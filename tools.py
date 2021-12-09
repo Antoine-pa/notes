@@ -27,19 +27,6 @@ class Tools:
                                     screen.screen.addstr(line[1], line[0], pagination + text[i], curses.A_BOLD)
                     """
                 else:
-                    """
-                    text = pagination + line[-1]
-                    if len(text) > screen.cursor.xmax:
-                        pos_x = screen.cursor.x + len(pagination)
-                        if pos_x < screen.cursor.xmax:
-                            text = text[:screen.cursor.xmax-1] + ">"
-                        else:
-                            text = text[pos_x-screen.cursor.xmax+1:pos_x]
-                            if pos_x != len(pagination) + len(line[-1]):
-                                text += ">"
-                    
-                    screen.screen.addstr(line[1], line[0], text)
-                    """
                     text = line[-1]
                     if len(text) + len(pagination) >= screen.cursor.xmax:
                         pos_x = screen.cursor.x + len(pagination)
@@ -59,11 +46,7 @@ class Tools:
         if _type == "file" and file is not None:
             with open(file, "w") as f:
                 f.write("\n".join(t))
-    
 
-    def remove_markdown(self, text):
-        text = text.split("**")
-        return text
     
     def save(self, doc, file):
         self.output(doc, "file", file = file)
