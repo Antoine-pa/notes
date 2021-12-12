@@ -11,6 +11,7 @@ class Screen:
 
         self.mode = "edit"
         ymax, xmax = screen.getmaxyx()
+        self.y_start_stop = [0, ymax]
         if len(doc) == 0:
             doc = [[0, 0, ""]]
         x = self.paging.len_text(doc, len(doc) - 1, self)

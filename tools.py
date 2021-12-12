@@ -2,6 +2,8 @@ import curses
 class Tools:
     def output(self, doc, _type, screen = None, file = None):
         t = []
+        if _type == "screen" and screen is not None:
+            doc = doc[screen.y_start_stop[0]:screen.y_start_stop[1]]
         for line in doc:
             pagination = ""
             if len(line[2]) != 0:
@@ -37,7 +39,7 @@ class Tools:
                             screen.paging.w(pos_x-screen.cursor.xmax+1, pos_x, text[pos_x-screen.cursor.xmax+1:pos_x])
                             if pos_x != len(pagination) + len(line[-1]):
                                 text += ">"
-                    screen.screen.addstr(line[1], line[0], pagination + text)
+                    screen.screen.addstr(line[1]-screen.y_start_stop[0], line[0], pagination + text)
                     
             else:
                 t.append(pagination + line[-1])
@@ -53,12 +55,13 @@ class Tools:
     
 
     def move_cursor(self, screen, doc):
-        pos_y = screen.cursor.y
-        if pos_y > screen.cursor.ymax:
+        pos_y = screen.cursor.y - screen.y_start_stop[0]
+        if pos_y >= screen.cursor.ymax:
             pos_y = screen.cursor.ymax - 1
 
         pos_x = screen.cursor.x + screen.paging.len_pagination(doc, screen.cursor.y)
         if pos_x >= screen.cursor.xmax:
             pos_x = screen.cursor.xmax - 1
             
+        screen.paging.w(screen.y_start_stop, screen.cursor.y, pos_x)
         screen.screen.move(pos_y, pos_x)

@@ -47,7 +47,7 @@ class Window:
         elif key == 360:
             self.screen.cursor.x = self.screen.paging.get_end_line(self.doc, self.screen)
         elif key == 410:
-            self.screen.cursor.ymax, self.screen.cursor.xmax = self.screen.getmaxyx()
+            self.screen.cursor.ymax, self.screen.cursor.xmax = self.screen.screen.getmaxyx()
         elif key == self._keybinds["ctrl+alt+q"]:
             self.loop = False
         elif key == 10:

@@ -16,6 +16,10 @@ class Cursor():
                 self.x = x_end_line
         elif self.x != 0:
             self.x = 0
+        
+        if self.y - screen.y_start_stop[0]+1 == 0 and screen.y_start_stop[0] != 0:
+            screen.y_start_stop[0] -= 1
+            screen.y_start_stop[1] -= 1
 
 
     def down(self, doc, screen):
@@ -26,6 +30,10 @@ class Cursor():
                 self.x = x_end_line
         elif self.x != self.paging.get_end_line(doc, self.y, screen):
             self.x = self.paging.get_end_line(doc, self.y, screen)
+        
+        if self.ymax <= self.y and screen.y_start_stop[1] <= self.y:
+            screen.y_start_stop[0] += 1
+            screen.y_start_stop[1] += 1
 
 
     def left(self, doc, screen):
@@ -75,9 +83,9 @@ class Cursor():
         text_line_after_cursor = doc[line][-1][self.x:]
         doc[line][-1] = doc[line][-1][:self.x]
         self.x = 0
-        pagination = self.paging.pagination(doc, line, screen)
-        doc = doc[:line+1] + [[0, line+1, pagination, text_line_after_cursor]] + doc[line+1:]
-        for l in doc[line+2:]:
+        pagination = self.paging.pagination(doc, line, screen) #new paging
+        doc = doc[:line+1] + [[0, line+1, pagination, text_line_after_cursor]] + doc[line+1:] #add the line in the doc
+        for l in doc[line+2:]: #changement des numéros de lignes
             l[1] += 1
             doc[l[1]] = l
         self.down(doc, screen)
@@ -97,6 +105,5 @@ class Cursor():
         self.y -= 1
         line -= 1
         self.x = self.paging.get_end_line(doc, line, screen) - len(text_line_after_cursor) + 1
-
-
+        
         return doc

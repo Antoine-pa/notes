@@ -8,10 +8,8 @@ class Paging:
 
 
     def pagination(self, doc, line, screen) -> dict:
-        #self.w(doc)
         if len(doc)-1 == line: #last line
             pagination = self.get_pagination(doc, line)
-            self.w(pagination, len(pagination), 6*len(pagination))
             if 6*len(pagination) + 6 < screen.cursor.xmax:
                 pagination = self.move_right_pagination(pagination, line)
         elif line == 0: #first line
