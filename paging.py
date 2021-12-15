@@ -1,6 +1,5 @@
 import itertools
 from logs import log
-from functools import cache
 
 class Paging:
     def __init__(self):
