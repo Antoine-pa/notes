@@ -64,14 +64,13 @@ class Cursor():
     
 
     def del_text(self, doc, screen):
-        line = self.y
-        text_doc = doc[line][-1]
+        text_doc = doc[self.y][-1]
         if len(text_doc) != 0 and self.x != 0:
-            doc[line][-1] = text_doc[:self.x-1] + text_doc[self.x:]
+            doc[self.y][-1] = text_doc[:self.x-1] + text_doc[self.x:]
             self.left(doc, screen)
-        elif self.x != 0 or line != 0: #if we can supr a line or a pagination
-            if self.paging.len_pagination(doc, line) != 0: #if we can supr a pagination
-                doc[line][2] = self.paging.move_left_pagination(self.paging.get_pagination(doc, line), line)
+        elif self.x != 0 or self.y != 0: #if we can supr a line or a pagination
+            if self.paging.len_pagination(doc, self.y) != 0: #if we can supr a pagination
+                doc[self.y][2] = self.paging.move_left_pagination(self.paging.get_pagination(doc, self.y), self.y)
             else:
                 doc = self.del_line(doc, screen)
                 self.left(doc, screen)
@@ -79,13 +78,12 @@ class Cursor():
 
 
     def add_line(self, doc, screen):
-        line = self.y
-        text_line_after_cursor = doc[line][-1][self.x:]
-        doc[line][-1] = doc[line][-1][:self.x]
+        text_line_after_cursor = doc[self.y][-1][self.x:]
+        doc[self.y][-1] = doc[self.y][-1][:self.x]
         self.x = 0
-        pagination = self.paging.pagination(doc, line, screen) #new paging
-        doc = doc[:line+1] + [[0, line+1, pagination, text_line_after_cursor]] + doc[line+1:] #add the line in the doc
-        for l in doc[line+2:]: #changement des numéros de lignes
+        pagination = self.paging.pagination(doc, self.y, screen) #new paging
+        doc = doc[:self.y+1] + [[0, self.y+1, pagination, text_line_after_cursor]] + doc[self.y+1:] #add the line in the doc
+        for l in doc[self.y+2:]: #changement des numéros de lignes
             l[1] += 1
             doc[l[1]] = l
         self.down(doc, screen)
@@ -93,17 +91,15 @@ class Cursor():
     
 
     def del_line(self, doc, screen):
-        line = self.y
-        text_line_after_cursor = doc[line][-1] #get rest
-        doc[line-1][-1] += text_line_after_cursor #add rest
-        doc = doc[:line] + doc[line+1:] #supr line
+        text_line_after_cursor = doc[self.y][-1] #get rest
+        doc[self.y-1][-1] += text_line_after_cursor #add rest
+        doc = doc[:self.y] + doc[self.y+1:] #supr line
 
-        for l in doc[line:]:
+        for l in doc[self.y:]:
             l[1] -= 1
             doc[l[1]] = l
 
         self.y -= 1
-        line -= 1
-        self.x = self.paging.get_end_line(doc, line, screen) - len(text_line_after_cursor) + 1
+        self.x = self.paging.get_end_line(doc, self.y, screen) - len(text_line_after_cursor) + 1
         
         return doc

@@ -8,22 +8,9 @@ class Paging:
 
 
     def pagination(self, doc, line, screen) -> dict:
-        if len(doc)-1 == line: #last line
-            pagination = self.get_pagination(doc, line)
-            if 6*len(pagination) + 6 < screen.cursor.xmax:
-                pagination = self.move_right_pagination(pagination, line)
-        elif line == 0: #first line
-            pagination = []
-        else:
-            paging_before = self.get_pagination(doc, line-1)
-            paging_after = self.get_pagination(doc, line+1)
-
-            pagination = paging_before
-            if len(paging_after) > len(paging_before):
-                pagination = paging_after
-            else:
-                if 6*len(pagination) < screen.cursor.xmax:
-                    pagination = self.move_right_pagination(pagination, line)
+        pagination = self.get_pagination(doc, line)
+        if 6*len(pagination) < screen.cursor.xmax and doc[line][-1] != "":
+            pagination = self.move_right_pagination(pagination, line+1)
                 
         return pagination
     

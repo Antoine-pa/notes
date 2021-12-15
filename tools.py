@@ -1,4 +1,6 @@
 import curses
+import json
+
 class Tools:
     def output(self, doc, _type, screen = None, file = None):
         t = []
@@ -52,6 +54,8 @@ class Tools:
     
     def save(self, doc, file):
         self.output(doc, "file", file = file)
+        with open('./output.json', "w") as file:
+            file.write(json.dumps(doc, indent=4))
     
 
     def move_cursor(self, screen, doc):
@@ -62,6 +66,6 @@ class Tools:
         pos_x = screen.cursor.x + screen.paging.len_pagination(doc, screen.cursor.y)
         if pos_x >= screen.cursor.xmax:
             pos_x = screen.cursor.xmax - 1
-            
-        screen.paging.w(screen.y_start_stop, screen.cursor.y, pos_x)
+
         screen.screen.move(pos_y, pos_x)
+        

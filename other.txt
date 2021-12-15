@@ -1,1 +1,0 @@
-ajout du parametre mode dans l'utilisation des fonctions get_end_line

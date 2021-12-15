@@ -1,31 +1,24 @@
 import curses
-from time import sleep
-import curses 
 
 screen = curses.initscr()
+screen.keypad(True)
+curses.noecho()
+max_y, max_x = screen.getmaxyx()
+#screen.border()
 
-try:
-    #screen.border(0)
+box1 = curses.newwin(max_y, round((max_x)//2), 0, 0)
+box1.box()
+#box1.addstr()
 
-    box1 = curses.newwin(20, 20, 5, 5)
-    box1.box()    
+box2 = curses.newwin(max_y, max_x-round(max_x/2), 0, max_x//2)
+box2.box()
+#box2.addstr()
 
-    screen.refresh()
-    box1.refresh()
-
-    screen.getch()
-
-finally:
-    curses.endwin()
-
-"""
-pagination = ""
-line = [0, 0]
-text = ["", "d", ""]
-i = 1
-screen.addstr(line[1], line[0], pagination + text[i], curses.A_BOLD)
 screen.refresh()
-while True:
-    pass
 
-"""
+box1.refresh()  
+box2.refresh()
+
+screen.getch()
+
+curses.endwin()

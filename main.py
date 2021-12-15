@@ -1,8 +1,9 @@
 from screen import Screen
 from platform import system
 import curses
+import json
 
-text = [[0, 0, {}, "coucou"]]
+text = [[0, 0, {}, "coucou"], [0, 1, {"1" : 1}, ""], [0, 2, {"1" : 2}, "test"]]
 
 dict_keybinds_os = {
     "Linux" : {
@@ -20,6 +21,8 @@ dict_keybinds_os = {
         "del" : 0,
         "ctrl+left-arrow" : 0,
         "ctrl+right-arrow" : 0}}
+
+dict_special_char = {169 : "é", 160 : "à", 168 : "è", 167 : "ç", 170 : "ê", 174 : "î"}
 
 class Window:
     def __init__(self, doc):
@@ -45,9 +48,15 @@ class Window:
         elif key == 262:
             self.screen.cursor.x = 0
         elif key == 360:
-            self.screen.cursor.x = self.screen.paging.get_end_line(self.doc, self.screen)
+            self.screen.cursor.x = self.screen.paging.get_end_line(self.doc, self.screen.cursor.y, self.screen)
         elif key == 410:
             self.screen.cursor.ymax, self.screen.cursor.xmax = self.screen.screen.getmaxyx()
+        elif key == 195:
+            key = self.screen.screen.getch()
+            char = dict_special_char.get(key, None)
+            if char is None:
+                char = chr(key)
+            self.doc = self.screen.cursor.add_text(self.doc, char, self.screen)
         elif key == self._keybinds["ctrl+alt+q"]:
             self.loop = False
         elif key == 10:
@@ -76,12 +85,14 @@ class Window:
 
 
     def main(self):
-        while self.loop:
-            self.refresh()
+        try:
+            while self.loop:
+                self.refresh()
 
-            key = self.screen.screen.getch()
-            self.keybinds(key)
-
+                key = self.screen.screen.getch()
+                self.keybinds(key)
+        except KeyboardInterrupt:
+            pass
         self.screen.screen.clear()
         curses.endwin()
 
@@ -93,5 +104,8 @@ class Window:
 
 if len(text) == 0:
     text = [[0, 0, ""]]
-
+"""
+with open(f'/home/antoine/Desktop/lectures-lineaires/Spleen_Laforgue/fiche.json', "r") as file:
+	text = json.load(file)
+"""
 Window(text).main()
