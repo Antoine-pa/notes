@@ -5,7 +5,7 @@ def log(func):
         t = time()
         val = func(*args, **kwargs)
         t = time() - t
-        with open("logs.txt", "w") as f:
+        with open("./logs/logs.txt", "w") as f:
             f.write("args : " + " ".join([str(arg) for arg in args]) + "\nkwargs : " + " ".join(str(kwarg[0]) + ' = ' + str(kwarg[1]) for kwarg in kwargs.items()) + "\ntime : " + str(t) + "\nvalue return : " + str(val))
         return val
     return wrapper

@@ -13,12 +13,18 @@ box1.box()
 box2 = curses.newwin(max_y, max_x-round(max_x/2), 0, max_x//2)
 box2.box()
 #box2.addstr()
+box1.addstr(1, 1, "okzef")
 
-screen.refresh()
 
-box1.refresh()  
-box2.refresh()
+while True:
+    #key = screen.getch()
+    screen.move(2, 1)
 
-screen.getch()
+    screen.refresh()
+
+    box1.refresh()  
+    box2.refresh()
+    
+
 
 curses.endwin()

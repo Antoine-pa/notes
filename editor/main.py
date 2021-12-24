@@ -1,9 +1,13 @@
 from screen import Screen
+from logs.logs import log
+
 from platform import system
+from os import remove
 import curses
 import json
 
-text = [[0, 0, {}, "coucou"], [0, 1, {"1" : 1}, ""], [0, 2, {"1" : 2}, "test"]]
+#text = [[0, 0, {}, "coucou"], [0, 1, {"1" : 1}, ""], [0, 2, {"1" : 2}, "test"]]
+text = [[0, 0, {}, "01234567890123456789012345678901234567890123456789012345678901234567890123456789"]]
 
 dict_keybinds_os = {
     "Linux" : {
@@ -29,11 +33,12 @@ class Window:
         self.screen = curses.initscr()
         self.screen.keypad(True)
         self.doc = doc
-        self.file = "output.txt"
+        self.file = "./../output/output"
         self.loop = True
         curses.noecho()
         self._keybinds = dict_keybinds_os[system()]
         self.screen = Screen(self.screen, self.doc)
+        self.screen.edit_box.keypad(True)
 
 
     def keybinds(self, key):
@@ -45,13 +50,16 @@ class Window:
             self.screen.cursor.left(self.doc, self.screen)
         elif key == 261:
             self.screen.cursor.right(self.doc, self.screen)
-        elif key == 262:
+        elif key == 262: #retour au début
             self.screen.cursor.x = 0
-        elif key == 360:
+            self.screen.refresh_x_interval(self.doc, 0)
+        elif key == 360: #retour à la fin
             self.screen.cursor.x = self.screen.paging.get_end_line(self.doc, self.screen.cursor.y, self.screen)
-        elif key == 410:
-            self.screen.cursor.ymax, self.screen.cursor.xmax = self.screen.screen.getmaxyx()
-        elif key == 195:
+        elif key == 410: #resize
+            self.screen.resize(self.doc)
+        elif key == 15: #ctrl+o
+            self.doc = self.screen.tools.open_file(self.screen)
+        elif key == 195: #accent circonflexe
             key = self.screen.screen.getch()
             char = dict_special_char.get(key, None)
             if char is None:
@@ -59,28 +67,28 @@ class Window:
             self.doc = self.screen.cursor.add_text(self.doc, char, self.screen)
         elif key == self._keybinds["ctrl+alt+q"]:
             self.loop = False
-        elif key == 10:
+        elif key == 10: #saut à la ligne
             self.doc = self.screen.cursor.add_line(self.doc, self.screen)
-        elif key == self._keybinds["del"]:
+        elif key == self._keybinds["del"]: #suppression
             self.doc = self.screen.cursor.del_text(self.doc, self.screen)
-        elif key == 9:
+        elif key == 9: #tab
             self.doc = self.screen.cursor.add_text(self.doc, "    ", self.screen)
         elif key == self._keybinds["ctrl+left-arrow"]:
-            self.doc[self.screen.cursor.y][2] = self.screen.paging.move_left_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y)
+            self.doc[self.screen.cursor.y][2] = self.screen.paging.move_left_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y, self.screen)
         elif key == self._keybinds["ctrl+right-arrow"]:
-            if self.screen.paging.len_pagination(self.doc, self.screen.cursor.y) + 6 < self.screen.cursor.xmax:
-                self.doc[self.screen.cursor.y][2] = self.screen.paging.move_right_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y)
+            if self.screen.paging.len_pagination(self.doc, self.screen.cursor.y) + 6 < self.screen.cursor.box_xmax:
+                self.doc[self.screen.cursor.y][2] = self.screen.paging.move_right_pagination(self.screen.paging.get_pagination(self.doc, self.screen.cursor.y), self.screen.cursor.y, self.screen)
         else:
             self.doc = self.screen.cursor.add_text(self.doc, chr(key), self.screen)
 
 
-
     def refresh(self):
-        self.screen.screen.clear()
-        self.doc = self.screen.paging.refresh_pagination(self.doc)
+        self.doc = self.screen.paging.refresh_pagination(self.doc, self.screen)
         self.screen.tools.output(self.doc, "screen", screen = self.screen)
-        self.screen.tools.move_cursor(self.screen, self.doc)
         self.screen.screen.refresh()
+        self.screen.view_box.refresh()
+        self.screen.cursor.move_cursor(self.screen, self.doc)
+        self.screen.edit_box.refresh()
 
 
 
@@ -91,15 +99,20 @@ class Window:
 
                 key = self.screen.screen.getch()
                 self.keybinds(key)
+                
         except KeyboardInterrupt:
             pass
         self.screen.screen.clear()
+        self.screen.screen.refresh()
         curses.endwin()
 
-        print(self.screen.cursor.x, self.screen.cursor.y, self.screen.cursor.xmax, self.screen.cursor.ymax)
+        print(self.screen.cursor.x, self.screen.cursor.y, self.screen.cursor.xmax, self.screen.cursor.ymax, self.screen.cursor.box_xmax, self.screen.cursor.box_ymax)
         print(self.doc)
 
         self.screen.tools.save(self.doc, self.file)
+
+        try: remove("debug.txt")
+        except: pass
 
 
 if len(text) == 0:
